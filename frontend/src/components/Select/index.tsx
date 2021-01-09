@@ -7,13 +7,21 @@ import { useField } from '@unform/core';
 
 import { Container } from './styles';
 
-interface Props extends SelectProps<OptionTypeBase> {
+interface Props extends SelectProps<OptionTypeBase, boolean> {
   name: string;
+  label: string;
+  className: string;
 }
 
 const Select: React.FC<Props> = ({ name, label, className, ...rest }) => {
   const selectRef = useRef(null);
-  const { fieldName, defaultValue, registerField, error } = useField(name);
+  const {
+    fieldName,
+    defaultValue,
+    registerField,
+    error,
+    clearError,
+  } = useField(name);
 
   useEffect(() => {
     registerField({
@@ -34,21 +42,14 @@ const Select: React.FC<Props> = ({ name, label, className, ...rest }) => {
     });
   }, [fieldName, registerField, rest.isMulti]);
 
-  const customStyles = {
-    singleValue: (provided: any) => ({
-      ...provided,
-      color: '#11273a',
-    }),
-  };
-
   return (
-    <Container className={className}>
-      <label>{label}</label>
+    <Container className={className} error={!!error}>
+      <label htmlFor={name}>{label}</label>
       <ReactSelect
         defaultValue={defaultValue}
         ref={selectRef}
         classNamePrefix="react-select"
-        styles={customStyles}
+        onFocus={clearError}
         {...rest}
       />
       {error && <span>{error}</span>}
