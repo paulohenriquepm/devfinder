@@ -61,7 +61,8 @@
       }],
       "react/jsx-props-no-spreading": "off",
       "react/prop-types": "off",
-      "jsx-a11y/label-has-associated-control": "off"
+      "jsx-a11y/label-has-associated-control": "off",
+      "@typescript-eslint/no-explicit-any": "off"
     },
     "settings": {
       "import/resolver": {
