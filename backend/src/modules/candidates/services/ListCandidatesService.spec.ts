@@ -9,7 +9,23 @@ jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('ListCandidates', () => {
-  it('should be able to list all the candidates', async () => {
+  it('should not be able to list the candidates', async () => {
+    mockedAxios.get.mockImplementationOnce(() =>
+      Promise.reject(new AppError('Network Error', 500)),
+    );
+
+    const listCandidates = new ListCandidatesService();
+
+    await expect(
+      listCandidates.execute({
+        experience: '',
+        city: '',
+        technologies: [],
+      }),
+    ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it('should be able to filter the candidates by experience, city and techs', async () => {
     const mockedData = {
       data: {
         candidates: [
@@ -31,14 +47,133 @@ describe('ListCandidates', () => {
           {
             id: 2,
             city: 'Divinópolis - MG',
-            experience: '0-2 years',
+            experience: '0-1 years',
             technologies: [
               {
-                name: 'Node',
+                name: 'Node.js',
                 is_main_tech: true,
               },
               {
                 name: 'React',
+                is_main_tech: true,
+              },
+            ],
+          },
+          {
+            id: 3,
+            city: 'Divinópolis - MG',
+            experience: '0-1 years',
+            technologies: [
+              {
+                name: 'PHP',
+                is_main_tech: true,
+              },
+              {
+                name: 'Angular 8',
+                is_main_tech: true,
+              },
+              {
+                name: 'Azure',
+                is_main_tech: false,
+              },
+              {
+                name: 'Node.js',
+                is_main_tech: true,
+              },
+              {
+                name: 'React',
+                is_main_tech: true,
+              },
+            ],
+          },
+          {
+            id: 4,
+            city: 'Divinópolis - MG',
+            experience: '1-2 years',
+            technologies: [
+              {
+                name: 'PHP',
+                is_main_tech: true,
+              },
+              {
+                name: 'Angular 8',
+                is_main_tech: true,
+              },
+              {
+                name: 'Azure',
+                is_main_tech: false,
+              },
+              {
+                name: 'Node.js',
+                is_main_tech: true,
+              },
+              {
+                name: 'React',
+                is_main_tech: true,
+              },
+            ],
+          },
+          {
+            id: 5,
+            city: 'Pará de Minas - MG',
+            experience: '1-2 years',
+            technologies: [
+              {
+                name: 'Node.js',
+                is_main_tech: true,
+              },
+              {
+                name: 'React',
+                is_main_tech: true,
+              },
+            ],
+          },
+          {
+            id: 6,
+            city: 'Florianópolis - SC',
+            experience: '5-6 years',
+            technologies: [
+              {
+                name: 'Node.js',
+                is_main_tech: false,
+              },
+              {
+                name: 'React',
+                is_main_tech: false,
+              },
+              {
+                name: 'Ruby',
+                is_main_tech: true,
+              },
+              {
+                name: 'Python',
+                is_main_tech: true,
+              },
+            ],
+          },
+          {
+            id: 7,
+            city: 'São Paulo - SP',
+            experience: '7-8 years',
+            technologies: [
+              {
+                name: 'Node.js',
+                is_main_tech: true,
+              },
+              {
+                name: 'React',
+                is_main_tech: false,
+              },
+              {
+                name: 'PHP',
+                is_main_tech: false,
+              },
+              {
+                name: 'Ruby',
+                is_main_tech: false,
+              },
+              {
+                name: 'Vue.js',
                 is_main_tech: true,
               },
             ],
@@ -51,20 +186,12 @@ describe('ListCandidates', () => {
 
     const listCandidates = new ListCandidatesService();
 
-    const candidates = await listCandidates.execute();
+    const candidates = await listCandidates.execute({
+      experience: '0-1 years',
+      city: 'Divinópolis - MG',
+      technologies: ['Node.js', 'React'],
+    });
 
-    expect(candidates.length).toBeGreaterThan(0);
-    expect(candidates[0].id).toBe(1);
-    expect(candidates[1].id).toBe(2);
-  });
-
-  it('should not be able to list the candidates', async () => {
-    mockedAxios.get.mockImplementationOnce(() =>
-      Promise.reject(new AppError('Network Error', 500)),
-    );
-
-    const listCandidates = new ListCandidatesService();
-
-    await expect(listCandidates.execute()).rejects.toBeInstanceOf(AppError);
+    expect(candidates.length).toBe(5);
   });
 });
