@@ -10,6 +10,10 @@ import Dashboard from '../../pages/Dashboard';
 const apiMock = new MockAdapter(api);
 
 describe('DashboardPage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should be able to search for devs', async () => {
     const { getByText, getByTestId } = render(<Dashboard />);
 
@@ -88,7 +92,7 @@ describe('DashboardPage', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(getByText('Selecione uma experiência')).toBeInTheDocument();
+      expect(getByText('Selecione uma experiência.')).toBeInTheDocument();
     });
   });
 });
