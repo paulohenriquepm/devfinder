@@ -7,8 +7,15 @@ import React, {
 } from 'react';
 import { FiSearch } from 'react-icons/fi';
 import { AvatarGenerator } from 'random-avatar-generator';
+import axios from 'axios';
+import * as Yup from 'yup';
+import { FormHandles } from '@unform/core';
+import { toast } from 'react-toastify';
+import Loader from 'react-loader-spinner';
 
 import api from '../../services/api';
+
+import getValidationErrors from '../../util/getValidationErrors';
 
 import Select from '../../components/Select';
 
@@ -40,44 +47,76 @@ interface IDev {
   technologies: ITechnology[];
 }
 
-interface IFormattedDev {
-  id: number;
-  city: string;
+interface IBGEUFResponse {
+  sigla: string;
+  nome: string;
+}
+
+interface IUF {
+  value: string;
+  label: string;
+}
+
+interface IBGECityResponse {
+  nome: string;
+}
+
+interface ICity {
+  value: string;
+  label: string;
+}
+
+interface IFilterData {
   experience: string;
+  uf: string;
+  city: string;
   technologies: Array<string>;
 }
 
 const Dashboard: React.FC = () => {
   const generator = new AvatarGenerator();
 
-  const filterRef = useRef(null);
+  const filterRef = useRef<FormHandles>(null);
+
+  const [loading, setLoading] = useState(false);
 
   const [devs, setDevs] = useState<IDev[]>([]);
+  const [ufs, setUfs] = useState<IUF[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
 
-  const loadDevs = useCallback(async () => {
-    try {
-      const response = await api.get('/candidates');
+  const [selectedUf, setSelectedUf] = useState<string | null>(null);
 
-      setDevs(response.data);
+  useEffect(() => {
+    axios
+      .get<IBGEUFResponse[]>(
+        'https://servicodados.ibge.gov.br/api/v1/localidades/estados',
+      )
+      .then(response => {
+        const ufsOptions = response.data.map(uf => ({
+          value: uf.sigla,
+          label: uf.nome,
+        }));
 
-      const formattedDevs = response.data.map((dev: IDev) => ({
-        ...dev,
-        technologies: dev.technologies
-          .map(tecnology => {
-            return tecnology.name;
-          })
-          .join(', '),
-      }));
-
-      console.log(formattedDevs);
-    } catch {
-      console.log('Falha ao carregar devs');
-    }
+        setUfs(ufsOptions);
+      });
   }, []);
 
   useEffect(() => {
-    loadDevs();
-  }, [loadDevs]);
+    if (selectedUf) {
+      axios
+        .get<IBGECityResponse[]>(
+          `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedUf}/municipios`,
+        )
+        .then(response => {
+          const citiesOptions = response.data.map(city => ({
+            value: city.nome,
+            label: city.nome,
+          }));
+
+          setCities(citiesOptions);
+        });
+    }
+  }, [selectedUf]);
 
   const experienceOptions = useMemo(() => {
     return [
@@ -97,11 +136,7 @@ const Dashboard: React.FC = () => {
     ];
   }, []);
 
-  const locationOptions = useMemo(() => {
-    return [];
-  }, []);
-
-  const techsOptions = useMemo(() => {
+  const technologiesOptions = useMemo(() => {
     return [
       { value: '.NET', label: '.NET' },
       { value: '.NET Core', label: '.NET Core' },
@@ -265,8 +300,72 @@ const Dashboard: React.FC = () => {
     ];
   }, []);
 
-  const handleFilter = useCallback(() => {
-    console.log('filter');
+  const loadDevs = useCallback(
+    async ({ experience, uf, city, technologies }) => {
+      try {
+        setLoading(true);
+
+        const response = await api.get('/candidates', {
+          params: {
+            experience,
+            uf,
+            city,
+            technologies,
+          },
+        });
+
+        const formattedDevs = response.data.map((dev: IDev) => ({
+          ...dev,
+          experience: dev.experience.replace('years', 'anos'),
+          technologies: dev.technologies
+            .map(tecnology => {
+              return tecnology.name;
+            })
+            .join(', '),
+        }));
+
+        setDevs(formattedDevs);
+      } catch {
+        toast.error('Erro ao carregar devs.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  const handleFilter = useCallback(
+    async (data: IFilterData) => {
+      try {
+        const schema = Yup.object().shape({
+          experience: Yup.string().required('Selecione uma experiência.'),
+          uf: Yup.string().required('Selecione um estado'),
+          city: Yup.string().required('Selecione uma cidade'),
+          technologies: Yup.array()
+            .of(Yup.string())
+            .min(1, 'Selecione uma tecnologia'),
+        });
+
+        await schema.validate(data, {
+          abortEarly: false,
+        });
+
+        loadDevs(data);
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          const errors = getValidationErrors(err);
+
+          filterRef.current?.setErrors(errors);
+        }
+
+        toast.error('Erro ao carregar devs.');
+      }
+    },
+    [loadDevs],
+  );
+
+  const handleChangeUf = useCallback(e => {
+    setSelectedUf(e.value);
   }, []);
 
   return (
@@ -281,54 +380,92 @@ const Dashboard: React.FC = () => {
           <img src={find_job} alt="find_job" />
 
           <TopContentMessage>
-            <p>
-              <strong>Encontre os </strong>
-              melhores desenvolvedores para a sua empresa.
-            </p>
+            <strong>
+              Encontre os melhores desenvolvedores para a sua empresa.
+            </strong>
             <span>
-              Pesquise profissionais por experiência, localização ou
-              tecnologias.
+              Pesquise profissionais por experiência, localização e tecnologias.
             </span>
           </TopContentMessage>
         </TopContent>
-        <Filter ref={filterRef} onSubmit={handleFilter}>
+        <Filter ref={filterRef} onSubmit={handleFilter} data-testid="filter">
           <Select
+            data-testid="experience"
             name="experience"
             className="experience"
             label="Experiência"
+            placeholder="Selecione uma opção"
             options={experienceOptions}
           />
           <Select
-            name="location"
-            className="location"
-            label="Localização"
-            options={[{ value: 1, label: 'Teste' }]}
+            name="uf"
+            className="ufs"
+            label="Estado"
+            options={ufs}
+            placeholder="Selecione um estado"
+            onChange={handleChangeUf}
+          />
+          <Select
+            id="city"
+            name="city"
+            className="cities"
+            label="Cidade"
+            options={cities}
+            placeholder="Selecione uma cidade"
+            isDisabled={!selectedUf}
           />
           <Select
             name="technologies"
             className="technologies"
+            label="Tecnologias"
+            placeholder="Selecione as tecnologias"
             isMulti
-            options={techsOptions}
+            options={technologiesOptions}
           />
-          <button type="submit">
-            <FiSearch size={24} color="#6E2B77" />
+          <button type="submit" className="icon" data-testid="submit-button">
+            {loading ? (
+              <Loader
+                type="TailSpin"
+                color="#FFF"
+                width="16"
+                height="16"
+                data-testid="loading-spin"
+              />
+            ) : (
+              <FiSearch size={16} color="#FFF" data-testid="search-icon" />
+            )}
+          </button>
+          <button type="submit" className="text">
+            {loading ? (
+              <Loader type="TailSpin" color="#FFF" width="16" height="16" />
+            ) : (
+              'Pesquisar'
+            )}
           </button>
         </Filter>
       </TopContainer>
       <Content>
-        <DevsList>
-          <Dev>
-            <img src={generator.generateRandomAvatar('avatar')} alt="avatar" />
-            <span>
-              <strong>Cidade: </strong>
-              Rio de Janeiro - RJ
-            </span>
-            <span>
-              <strong>Experiência: </strong>
-              12+ anos
-            </span>
-          </Dev>
-        </DevsList>
+        {!loading && devs.length > 0 && (
+          <DevsList>
+            {devs.map(dev => (
+              <Dev key={dev.id}>
+                <img src={generator.generateRandomAvatar()} alt="avatar" />
+                <span>
+                  <strong>Cidade: </strong>
+                  {dev.city}
+                </span>
+                <span>
+                  <strong>Experiência: </strong>
+                  {dev.experience}
+                </span>
+                <span>
+                  <strong>Tecnologias: </strong>
+                  {dev.technologies}
+                </span>
+              </Dev>
+            ))}
+          </DevsList>
+        )}
       </Content>
     </Container>
   );
