@@ -281,7 +281,6 @@ export const Dev = styled.div`
   overflow: hidden;
   padding: 16px;
   background: #fff;
-  justify-content: center;
   color: #11273a;
   width: 320px;
   height: 320px;
