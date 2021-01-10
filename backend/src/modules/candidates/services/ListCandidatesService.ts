@@ -91,6 +91,14 @@ export default class ListCandidatesService {
       );
     }
 
+    if (filteredCandidates.length !== 5) {
+      const relatedCandidates = candidates.filter(
+        (candidate: ICandidate) => !ids.includes(candidate.id),
+      );
+
+      filteredCandidates = filteredCandidates.concat(relatedCandidates);
+    }
+
     filteredCandidates = filteredCandidates.slice(0, 5);
 
     return filteredCandidates;
