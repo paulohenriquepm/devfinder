@@ -47,10 +47,10 @@ export default class ListCandidatesService {
       const relatedCandidates = candidates.filter(
         (candidate: ICandidate) =>
           !ids.includes(candidate.id) &&
-          candidate.experience === experience &&
           candidate.city === city &&
-          candidate.technologies.filter(tech =>
-            technologies.includes(tech.name),
+          candidate.technologies.filter(
+            tech =>
+              technologies.includes(tech.name) && tech.is_main_tech === true,
           ).length === technologies.length,
       );
 
@@ -64,9 +64,9 @@ export default class ListCandidatesService {
       const relatedCandidates = candidates.filter(
         (candidate: ICandidate) =>
           !ids.includes(candidate.id) &&
-          candidate.city === city &&
-          candidate.technologies.filter(tech =>
-            technologies.includes(tech.name),
+          candidate.technologies.filter(
+            tech =>
+              technologies.includes(tech.name) && tech.is_main_tech === true,
           ).length === technologies.length,
       );
 
