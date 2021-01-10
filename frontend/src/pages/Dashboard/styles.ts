@@ -234,6 +234,7 @@ export const Filter = styled(Form)`
       }
 
       &.text {
+        height: 36px;
         display: block;
       }
     }
@@ -246,10 +247,23 @@ export const Filter = styled(Form)`
 
 export const Content = styled.main`
   display: flex;
+  align-items: center;
+  justify-content: center;
 
   background: #f8f8f8;
   min-height: 480px;
   padding-bottom: 46px;
+
+  img {
+    padding-top: 46px;
+    width: 400px;
+  }
+
+  @media (max-width: 425px) {
+    img {
+      width: 250px;
+    }
+  }
 `;
 
 export const DevsList = styled.div`

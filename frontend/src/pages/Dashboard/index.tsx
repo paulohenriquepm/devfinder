@@ -20,6 +20,7 @@ import getValidationErrors from '../../util/getValidationErrors';
 import Select from '../../components/Select';
 
 import logo from '../../assets/logo.svg';
+import hire from '../../assets/hire.svg';
 import find_job from '../../assets/find-job.svg';
 
 import {
@@ -445,26 +446,32 @@ const Dashboard: React.FC = () => {
         </Filter>
       </TopContainer>
       <Content>
-        {!loading && devs.length > 0 && (
-          <DevsList>
-            {devs.map(dev => (
-              <Dev key={dev.id}>
-                <img src={generator.generateRandomAvatar()} alt="avatar" />
-                <span>
-                  <strong>Cidade: </strong>
-                  {dev.city}
-                </span>
-                <span>
-                  <strong>Experiência: </strong>
-                  {dev.experience}
-                </span>
-                <span>
-                  <strong>Tecnologias: </strong>
-                  {dev.technologies}
-                </span>
-              </Dev>
-            ))}
-          </DevsList>
+        {!loading && (
+          <>
+            {devs.length === 0 ? (
+              <img src={hire} alt="hire" />
+            ) : (
+              <DevsList>
+                {devs.map(dev => (
+                  <Dev key={dev.id}>
+                    <img src={generator.generateRandomAvatar()} alt="avatar" />
+                    <span>
+                      <strong>Cidade: </strong>
+                      {dev.city}
+                    </span>
+                    <span>
+                      <strong>Experiência: </strong>
+                      {dev.experience}
+                    </span>
+                    <span>
+                      <strong>Tecnologias: </strong>
+                      {dev.technologies}
+                    </span>
+                  </Dev>
+                ))}
+              </DevsList>
+            )}
+          </>
         )}
       </Content>
     </Container>
