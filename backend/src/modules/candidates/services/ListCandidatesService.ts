@@ -1,8 +1,12 @@
-import axios from 'axios';
+import { getRepository } from 'typeorm';
+
+import AppError from '../../../errors/AppError';
+
+import Candidate from '../entities/Candidate';
 
 interface IRequest {
   experience: any;
-  city: any;
+  city: string;
   technologies: any;
 }
 
@@ -24,83 +28,68 @@ export default class ListCandidatesService {
     city,
     technologies,
   }: IRequest): Promise<ICandidate[]> {
-    const response = await axios.get(process.env.API_URL || '');
-
-    const { candidates } = response.data;
-
-    let filteredCandidates: ICandidate[] = [];
-    let ids: Array<number> = [];
-
-    filteredCandidates = candidates.filter(
-      (candidate: ICandidate) =>
-        candidate.experience === experience &&
-        candidate.city === city &&
-        candidate.technologies.filter(
-          tech =>
-            technologies.includes(tech.name) && tech.is_main_tech === true,
-        ).length === technologies.length,
-    );
-
-    if (filteredCandidates.length !== 5) {
-      ids = filteredCandidates.map((candidate: ICandidate) => candidate.id);
-
-      const relatedCandidates = candidates.filter(
-        (candidate: ICandidate) =>
-          !ids.includes(candidate.id) &&
-          candidate.city === city &&
-          candidate.technologies.filter(
-            tech =>
-              technologies.includes(tech.name) && tech.is_main_tech === true,
-          ).length === technologies.length,
-      );
-
-      filteredCandidates = filteredCandidates.concat(relatedCandidates);
-      ids = ids.concat(
-        relatedCandidates.map((candidate: ICandidate) => candidate.id),
-      );
+    if (!experience || !city || technologies.length === 0) {
+      throw new AppError('Todos os filtros são obrigatórios.', 401);
     }
 
-    if (filteredCandidates.length !== 5) {
-      const relatedCandidates = candidates.filter(
-        (candidate: ICandidate) =>
-          !ids.includes(candidate.id) &&
-          candidate.technologies.filter(
-            tech =>
-              technologies.includes(tech.name) && tech.is_main_tech === true,
-          ).length === technologies.length,
-      );
+    const candidateRepository = getRepository(Candidate);
 
-      filteredCandidates = filteredCandidates.concat(relatedCandidates);
-      ids = ids.concat(
-        relatedCandidates.map((candidate: ICandidate) => candidate.id),
-      );
-    }
+    const candidates = await candidateRepository
+      .createQueryBuilder('candidates')
+      .innerJoinAndSelect('candidates.technologies', 'technologies')
+      .where(
+        `
+            (
+              candidates.experience = :experience
+              AND candidates.city = :city
+              AND EXISTS (
+                SELECT * FROM techs
+                WHERE techs.candidate_id = candidates.id
+                AND techs.name IN (:...techs) AND techs.is_main_tech = true
+              )
+            )
+          OR
+            (
+              candidates.city = :city
+              AND EXISTS (
+                SELECT * FROM techs
+                WHERE techs.candidate_id = candidates.id
+                AND techs.name IN (:...techs) AND techs.is_main_tech = true
+              )
+            )
+          OR
+            (
+              EXISTS (
+                SELECT * FROM techs
+                WHERE techs.candidate_id = candidates.id
+                AND techs.name IN (:...techs) AND techs.is_main_tech = true
+              )
+            )
+          OR
+            (
+              EXISTS (
+                SELECT * FROM techs
+                WHERE techs.candidate_id = candidates.id
+                AND techs.name IN (:...techs)
+              )
+            )
+          OR
+            (
+              EXISTS (
+                SELECT * FROM techs
+                WHERE techs.candidate_id = candidates.id
+              )
+            )
+          `,
+        {
+          experience,
+          city,
+          techs: technologies,
+        },
+      )
+      .take(5)
+      .getMany();
 
-    if (filteredCandidates.length !== 5) {
-      const relatedCandidates = candidates.filter(
-        (candidate: ICandidate) =>
-          !ids.includes(candidate.id) &&
-          candidate.technologies.filter(tech =>
-            technologies.includes(tech.name),
-          ).length === technologies.length,
-      );
-
-      filteredCandidates = filteredCandidates.concat(relatedCandidates);
-      ids = ids.concat(
-        relatedCandidates.map((candidate: ICandidate) => candidate.id),
-      );
-    }
-
-    if (filteredCandidates.length !== 5) {
-      const relatedCandidates = candidates.filter(
-        (candidate: ICandidate) => !ids.includes(candidate.id),
-      );
-
-      filteredCandidates = filteredCandidates.concat(relatedCandidates);
-    }
-
-    filteredCandidates = filteredCandidates.slice(0, 5);
-
-    return filteredCandidates;
+    return candidates;
   }
 }
