@@ -6,9 +6,14 @@
   "license": "MIT",
   "scripts": {
     "build": "babel src --extensions \".js,.ts\" --out-dir dist --copy-files",
-    "dev:server": "ts-node-dev --transpile-only --ignore-watch node_modules src/server.ts",
+    "predev:server": "CONNECTION_NAME=default yarn typeorm migration:run -c default && yarn seed -c default",
+    "dev:server": "CONNECTION_NAME=default ts-node-dev --transpile-only --ignore-watch node_modules src/app.ts",
     "start": "ts-node dist/server.js",
-    "test": "jest"
+    "typeorm": "tsnd ./node_modules/typeorm/cli.js",
+    "seed": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
+    "pretest": "CONNECTION_NAME=test yarn typeorm migration:run -c test",
+    "test": "CONNECTION_NAME=test jest",
+    "posttest": "CONNECTION_NAME=test yarn typeorm migration:revert -c test"
   },
   "engines": {
     "node": "14.x"
@@ -18,7 +23,10 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "ts-node": "^9.1.1"
+    "pg": "^8.5.1",
+    "ts-node": "^9.1.1",
+    "typeorm": "^0.2.30",
+    "typeorm-seeding": "^1.6.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.10",
@@ -32,6 +40,7 @@
     "@typescript-eslint/eslint-plugin": "^4.12.0",
     "@typescript-eslint/parser": "^4.12.0",
     "babel-plugin-module-resolver": "^4.1.0",
+    "better-sqlite3": "^7.1.2",
     "eslint": "^7.17.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-config-prettier": "^7.1.0",
