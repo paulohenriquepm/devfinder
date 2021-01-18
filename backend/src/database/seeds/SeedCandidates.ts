@@ -7,7 +7,9 @@ import Tech from '../../modules/candidates/entities/Tech';
 
 export default class CreateUsers implements Seeder {
   public async run(): Promise<void> {
-    const response = await axios.get(process.env.API_URL || '');
+    const response = await axios.get(
+      'https://geekhunter-recruiting.s3.amazonaws.com/code_challenge.json',
+    );
 
     const { candidates } = response.data;
 
