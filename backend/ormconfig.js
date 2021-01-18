@@ -1,13 +1,9 @@
-[
+module.exports = [
   {
+    "type": "postgres",
     "environment": "development",
     "name": "default",
-    "type": "postgres",
-    "host": "localhost",
-    "port": 5432,
-    "username": "postgres",
-    "password": "postgres",
-    "database": "devfinder",
+    "url": process.env.DATABASE_URL,
     "entities": [
       "./src/modules/**/entities/*.ts"
     ],
