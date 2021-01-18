@@ -8,6 +8,7 @@
     "build": "babel src --extensions \".js,.ts\" --out-dir dist --copy-files",
     "predev:server": "CONNECTION_NAME=default yarn typeorm migration:run -c default && yarn seed -c default",
     "dev:server": "CONNECTION_NAME=default ts-node-dev --transpile-only --ignore-watch node_modules src/app.ts",
+    "prestart": "CONNECTION_NAME=default yarn typeorm migration:run -c default && yarn seed -c default",
     "start": "ts-node dist/server.js",
     "typeorm": "tsnd ./node_modules/typeorm/cli.js",
     "seed": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
