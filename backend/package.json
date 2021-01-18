@@ -11,7 +11,7 @@
     "prestart": "CONNECTION_NAME=default yarn typeorm migration:run -c default && yarn seed -c default",
     "start": "ts-node dist/server.js",
     "typeorm": "ts-node ./node_modules/typeorm/cli.js",
-    "seed": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
+    "seed": "node -r dotenv/config -r ts-node/register ./node_modules/typeorm-seeding/dist/cli.js seed",
     "pretest": "CONNECTION_NAME=test yarn typeorm migration:run -c test",
     "test": "CONNECTION_NAME=test jest",
     "posttest": "CONNECTION_NAME=test yarn typeorm migration:revert -c test"

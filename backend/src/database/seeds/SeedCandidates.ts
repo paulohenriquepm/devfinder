@@ -1,12 +1,9 @@
 import { Seeder } from 'typeorm-seeding';
 import { getRepository } from 'typeorm';
 import axios from 'axios';
-import dotenv from 'dotenv';
 
 import Candidate from '../../modules/candidates/entities/Candidate';
 import Tech from '../../modules/candidates/entities/Tech';
-
-dotenv.config();
 
 export default class CreateUsers implements Seeder {
   public async run(): Promise<void> {
