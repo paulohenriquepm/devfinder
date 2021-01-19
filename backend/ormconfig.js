@@ -1,3 +1,4 @@
+console.log(process.env.ORM_PATH, process.env.FILE_TYPE)
 module.exports = [
   {
     "type": "postgres",
@@ -5,13 +6,13 @@ module.exports = [
     "name": "default",
     "url": process.env.DATABASE_URL,
     "entities": [
-      "./src/modules/**/entities/*.ts"
+      `${process.env.ORM_PATH}/modules/**/entities/*.${process.env.FILE_TYPE}`
     ],
     "migrations": [
-      "./src/database/migrations/*.ts"
+      `${process.env.ORM_PATH}/database/migrations/*.${process.env.FILE_TYPE}`
     ],
     "seeds": [
-      "./src/database/seeds/*.ts"
+      `${process.env.ORM_PATH}/database/seeds/*.${process.env.FILE_TYPE}`
     ],
     "cli": {
       "migrationsDir": "./src/database/migrations"
